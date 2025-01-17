@@ -342,6 +342,14 @@ class PjitFunction {
     return inspect->attr("signature")(*fun_);
   }
 
+  std::vector<CallSignature> GetCallSignatures(){
+    std::vector<CallSignature> output;
+    for (auto it=executables_->begin(); it != executables_->end(); ++it) {
+      output.push_back(it->first);
+    }
+    return output;
+  }
+
  private:
   absl::Status ComputeCallSignature(
       absl::Span<nb::object const> flat_dynamic_args,
@@ -1227,6 +1235,15 @@ PyType_Slot PjitFunction_slots[] = {
 }  // namespace
 
 void BuildPjitSubmodule(nb::module_& m) {
+
+  nb::class_<CallSignature> callsig(m, "CallSignature");
+  callsig.def("function_name", [](const CallSignature& self) { return self.function_name; });
+  callsig.def("eq", [](const CallSignature& self, const CallSignature& other){
+    return self == other;
+  });
+  callsig.def("shardings", [](const CallSignature& self) { return self.dynamic_arg_shardings; });
+  callsig.def("debug_string", [](const CallSignature& self) { return self.DebugString(); });
+
   nb::class_<PjitFunctionCache> cache(m, "PjitFunctionCache");
   cache.def(nb::init<int>(),
             nb::arg("capacity") = PjitFunctionCache::kDefaultCapacity);
@@ -1361,6 +1378,11 @@ void BuildPjitSubmodule(nb::module_& m) {
       nb::is_method());
   cfun.attr("_clear_cache") = nb::cpp_function(
       [](nb::handle self) { AsPjitFunction(self)->ClearCache(); },
+      nb::is_method());
+  cfun.attr("get_call_signatures") = nb::cpp_function(
+      [](nb::handle self) -> std::vector<CallSignature> {
+        return AsPjitFunction(self)->GetCallSignatures();
+      },
       nb::is_method());
 
   m.def(

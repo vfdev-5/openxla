@@ -297,6 +297,10 @@ void RegisterSharding(nb::module_& m) {
           nb::arg("devices"), nb::arg("sharding_spec"))
       .def_prop_ro("devices", &PmapSharding::devices)
       .def_prop_ro("sharding_spec", &PmapSharding::sharding_spec)
+      // .def_prop_ro("sharding_spec", [](PmapSharding* self) {
+      //   // printf("call attr PmapSharding.sharding_spec\n");
+      //   return self->sharding_spec();
+      // })
       .def_prop_ro("_internal_device_list",
                    &PmapSharding::internal_device_list);
 
